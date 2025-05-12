@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda de Práctica GTM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados adicionales si son necesarios */
+        body {
+            font-family: 'Inter', sans-serif; /* Fuente agradable */
+        }
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .btn {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .message-box {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-700 text-white min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
+
+    <div class="container mx-auto p-6 bg-slate-800 shadow-2xl rounded-xl max-w-2xl w-full">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-sky-400">Tienda de Práctica GTM</h1>
+            <p class="text-slate-400 mt-2">Un lugar para simular el proceso de compra y aprender GTM.</p>
+        </header>
+
+        <section id="productSection" class="mb-8">
+            <div class="product-card bg-slate-700 p-6 rounded-lg shadow-lg">
+                <img src="https://placehold.co/600x400/334155/e2e8f0?text=Producto+Increíble"
+                     alt="Imagen de Producto Increíble"
+                     class="w-full h-64 object-cover rounded-md mb-6 shadow-md"
+                     onerror="this.onerror=null;this.src='https://placehold.co/600x400/ef4444/ffffff?text=Error+al+cargar+imagen';">
+
+                <div id="productDetails"
+                     data-product-id="PRD123"
+                     data-product-name="Producto Increíble Pro"
+                     data-product-category="Electrónicos Avanzados"
+                     data-product-price="99.99"
+                     data-product-currency="USD">
+
+                    <h2 class="text-3xl font-semibold text-sky-300 mb-2">Producto Increíble Pro</h2>
+                    <p class="text-slate-300 mb-4">La solución definitiva para tus necesidades imaginarias. Con características mejoradas y un diseño elegante.</p>
+                    <p class="text-2xl font-bold text-emerald-400 mb-6">Precio: $99.99 USD</p>
+                </div>
+
+                <div class="space-y-4">
+                    <button id="addToCartBtn"
+                            onclick="handleAddToCart()"
+                            class="btn w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-opacity-75">
+                        🛒 Añadir al Carrito
+                    </button>
+
+                    <button id="beginCheckoutBtn"
+                            onclick="handleBeginCheckout()"
+                            class="btn w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-opacity-75 hidden">
+                        💳 Iniciar Pago
+                    </button>
+
+                    <button id="purchaseBtn"
+                            onclick="handlePurchase()"
+                            class="btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-opacity-75 hidden">
+                        🛍️ Confirmar Compra
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="messageSection" class="mt-8 text-center">
+            <div id="messageBox" class="message-box bg-slate-700 p-4 rounded-lg shadow-md text-slate-300 min-h-[50px] flex items-center justify-center">
+                <p>Bienvenido. Selecciona un producto para comenzar.</p>
+            </div>
+        </section>
+
+         <div class="mt-8 text-center">
+            <button id="resetBtn"
+                    onclick="resetFlow()"
+                    class="btn bg-rose-500 hover:bg-rose-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-opacity-75">
+                🔄 Reiniciar Simulación
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Referencias a los elementos del DOM
+        const productDetailsElement = document.getElementById('productDetails');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const beginCheckoutBtn = document.getElementById('beginCheckoutBtn');
+        const purchaseBtn = document.getElementById('purchaseBtn');
+        const messageBox = document.getElementById('messageBox');
+
+        // --- Simulación de dataLayer de Google Tag Manager ---
+        // Es buena práctica declarar dataLayer ANTES del script de GTM
+        // Para este ejemplo, lo simularemos aquí para que puedas ver los eventos.
+        window.dataLayer = window.dataLayer || [];
+
+        function pushToDataLayer(eventData) {
+            console.log('Pushing to dataLayer:', eventData); // Para depuración en consola
+            window.dataLayer.push(eventData);
+        }
+
+        // --- Funciones de los Botones ---
+
+        /**
+         * Maneja el evento de añadir al carrito.
+         * Aquí es donde típicamente enviarías un evento 'add_to_cart' a GTM.
+         */
+        function handleAddToCart() {
+            // Obtener detalles del producto para el dataLayer
+            const productData = {
+                id: productDetailsElement.dataset.productId,
+                name: productDetailsElement.dataset.productName,
+                category: productDetailsElement.dataset.productCategory,
+                price: parseFloat(productDetailsElement.dataset.productPrice),
+                currency: productDetailsElement.dataset.productCurrency,
+                quantity: 1 // Asumimos que se añade 1 unidad
+            };
+
+            // Simular envío de evento a dataLayer para GTM
+            pushToDataLayer({
+                event: 'add_to_cart', // Nombre del evento estándar de GA4
+                ecommerce: {
+                    currency: productData.currency,
+                    value: productData.price, // Valor del item añadido
+                    items: [{
+                        item_id: productData.id,
+                        item_name: productData.name,
+                        item_category: productData.category,
+                        price: productData.price,
+                        quantity: productData.quantity
+                    }]
+                }
+            });
+
+            // Actualizar UI
+            messageBox.innerHTML = `<p class="text-sky-300">✅ "${productData.name}" añadido al carrito.</p>`;
+            addToCartBtn.classList.add('hidden');
+            beginCheckoutBtn.classList.remove('hidden');
+            beginCheckoutBtn.focus(); // Mejorar accesibilidad
+        }
+
+        /**
+         * Maneja el evento de iniciar el proceso de pago.
+         * Aquí es donde típicamente enviarías un evento 'begin_checkout' a GTM.
+         */
+        function handleBeginCheckout() {
+            // Simular envío de evento a dataLayer para GTM
+            // Para begin_checkout, usualmente se envían todos los items del carrito.
+            // Para este ejemplo simple, asumimos que es el mismo producto.
+            const productData = {
+                id: productDetailsElement.dataset.productId,
+                name: productDetailsElement.dataset.productName,
+                category: productDetailsElement.dataset.productCategory,
+                price: parseFloat(productDetailsElement.dataset.productPrice),
+                currency: productDetailsElement.dataset.productCurrency,
+                quantity: 1
+            };
+
+            pushToDataLayer({
+                event: 'begin_checkout', // Nombre del evento estándar de GA4
+                ecommerce: {
+                    currency: productData.currency,
+                    value: productData.price * productData.quantity, // Valor total del carrito
+                    items: [{
+                        item_id: productData.id,
+                        item_name: productData.name,
+                        item_category: productData.category,
+                        price: productData.price,
+                        quantity: productData.quantity
+                    }]
+                    // Podrías añadir 'coupon' si aplica
+                }
+            });
+
+            // Actualizar UI
+            messageBox.innerHTML = '<p class="text-amber-300">💳 Has iniciado el proceso de pago.</p>';
+            beginCheckoutBtn.classList.add('hidden');
+            purchaseBtn.classList.remove('hidden');
+            purchaseBtn.focus();
+        }
+
+        /**
+         * Maneja el evento de compra.
+         * Aquí es donde típicamente enviarías un evento 'purchase' a GTM.
+         */
+        function handlePurchase() {
+            const transactionId = 'TID' + Date.now(); // ID de transacción único (simulado)
+            const productData = {
+                id: productDetailsElement.dataset.productId,
+                name: productDetailsElement.dataset.productName,
+                category: productDetailsElement.dataset.productCategory,
+                price: parseFloat(productDetailsElement.dataset.productPrice),
+                currency: productDetailsElement.dataset.productCurrency,
+                quantity: 1
+            };
+
+            // Simular envío de evento a dataLayer para GTM
+            pushToDataLayer({
+                event: 'purchase', // Nombre del evento estándar de GA4
+                ecommerce: {
+                    transaction_id: transactionId,
+                    value: productData.price * productData.quantity, // Valor total de la transacción
+                    tax: productData.price * 0.18, // Ejemplo de impuesto (18%)
+                    shipping: 5.00, // Ejemplo de costo de envío
+                    currency: productData.currency,
+                    coupon: 'SUMMERSALE', // Ejemplo de cupón
+                    items: [{
+                        item_id: productData.id,
+                        item_name: productData.name,
+                        item_category: productData.category,
+                        price: productData.price,
+                        quantity: productData.quantity
+                        // item_brand: 'Marca Ejemplo', // Opcional
+                        // item_variant: 'Color Rojo', // Opcional
+                        // coupon: 'ITEMCOUPON' // Opcional, cupón a nivel de item
+                    }]
+                }
+            });
+
+            // Actualizar UI
+            messageBox.innerHTML = `<p class="text-emerald-300">🎉 ¡Compra completada! Gracias. ID de Transacción: ${transactionId}</p>`;
+            purchaseBtn.classList.add('hidden');
+            // Opcionalmente, podrías mostrar un mensaje de "Gracias" y reiniciar.
+        }
+
+        /**
+         * Reinicia el flujo de compra a su estado inicial.
+         */
+        function resetFlow() {
+            addToCartBtn.classList.remove('hidden');
+            beginCheckoutBtn.classList.add('hidden');
+            purchaseBtn.classList.add('hidden');
+            messageBox.innerHTML = '<p>Bienvenido. Selecciona un producto para comenzar.</p>';
+            // Opcional: limpiar el dataLayer o algunas de sus variables si es necesario para la prueba.
+            // Por ejemplo, si GTM usa variables del dataLayer que deben resetearse.
+            // window.dataLayer.push({'variable_a_limpiar': undefined});
+            console.log('Flujo reiniciado');
+        }
+
+        // Inicialización (si es necesaria alguna lógica al cargar la página)
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Página de práctica GTM cargada y lista.');
+            // Aquí podrías enviar un evento 'view_item' si la página se considera la vista de un producto específico.
+            const productData = {
+                id: productDetailsElement.dataset.productId,
+                name: productDetailsElement.dataset.productName,
+                category: productDetailsElement.dataset.productCategory,
+                price: parseFloat(productDetailsElement.dataset.productPrice),
+                currency: productDetailsElement.dataset.productCurrency
+            };
+            pushToDataLayer({
+                event: 'view_item',
+                ecommerce: {
+                    currency: productData.currency,
+                    value: productData.price,
+                    items: [{
+                        item_id: productData.id,
+                        item_name: productData.name,
+                        item_category: productData.category,
+                        price: productData.price,
+                        quantity: 1 // Para view_item, la cantidad suele ser 1
+                    }]
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
