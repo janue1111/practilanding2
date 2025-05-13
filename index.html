@@ -56,7 +56,7 @@
     <div class="container mx-auto p-6 bg-slate-800 shadow-2xl rounded-xl max-w-2xl w-full">
         <header class="mb-8 text-center">
             <h1 class="text-4xl font-bold text-sky-400">Tienda de Práctica GTM</h1>
-            <p class="text-slate-400 mt-2">Simula un flujo de compra completo, incluyendo datos de cliente.</p>
+            <p class="text-slate-400 mt-2">Simula un flujo de compra completo, incluyendo datos de cliente y event_id.</p>
         </header>
 
         <section id="productSection" class="mb-8">
@@ -182,11 +182,9 @@
         const productSection = document.getElementById('productSection');
         const productDetailsElement = document.getElementById('productDetails');
         const addToCartBtn = document.getElementById('addToCartBtn');
-        const beginCheckoutBtn = document.getElementById('beginCheckoutBtn'); // Botón intermedio
+        const beginCheckoutBtn = document.getElementById('beginCheckoutBtn');
         const checkoutSection = document.getElementById('checkoutSection');
         const checkoutForm = document.getElementById('checkoutForm');
-        // El botón de compra ahora está dentro del formulario, pero lo referenciamos si es necesario fuera del form submit
-        // const purchaseBtn = document.getElementById('purchaseBtn');
         const messageBox = document.getElementById('messageBox');
         const checkoutTotalSpan = document.getElementById('checkoutTotal');
 
@@ -197,8 +195,16 @@
             window.dataLayer.push(eventData);
         }
 
-        // --- Datos del Producto (podría ser un array si hay múltiples productos) ---
-        let currentProductData = {}; // Se llenará en DOMContentLoaded
+        // --- Datos del Producto ---
+        let currentProductData = {};
+
+        /**
+         * Genera un ID de evento único para deduplicación (útil para Server-Side).
+         * @returns {string} Un ID único basado en timestamp y un número aleatorio.
+         */
+        function generateEventId() {
+            return `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        }
 
         /**
          * Obtiene los datos del producto desde los atributos data-*
@@ -210,7 +216,7 @@
                 category: productDetailsElement.dataset.productCategory,
                 price: parseFloat(productDetailsElement.dataset.productPrice),
                 currency: productDetailsElement.dataset.productCurrency,
-                quantity: 1 // Asumimos 1 unidad por simplicidad
+                quantity: 1
             };
         }
 
@@ -219,10 +225,12 @@
          */
         function handleAddToCart() {
             const productData = currentProductData;
+            const eventId = generateEventId(); // Generar event_id
 
             pushToDataLayer({
                 event: 'add_to_cart',
                 ecommerce: {
+                    event_id: eventId, // <--- AÑADIDO event_id
                     currency: productData.currency,
                     value: productData.price,
                     items: [{
@@ -235,10 +243,10 @@
                 }
             });
 
-            messageBox.innerHTML = `<p class="text-sky-300">✅ "${productData.name}" añadido al carrito.</p>`;
-            productSection.classList.add('hidden'); // Ocultar sección de producto
-            addToCartBtn.classList.add('hidden'); // Ocultar botón de añadir (ya está en productSection)
-            beginCheckoutBtn.classList.remove('hidden'); // Mostrar botón de "Proceder al Pago"
+            messageBox.innerHTML = `<p class="text-sky-300">✅ "${productData.name}" añadido al carrito. (Event ID: ${eventId})</p>`;
+            productSection.classList.add('hidden');
+            addToCartBtn.classList.add('hidden');
+            beginCheckoutBtn.classList.remove('hidden');
             beginCheckoutBtn.focus();
         }
 
@@ -247,10 +255,12 @@
          */
         function handleBeginCheckout() {
             const productData = currentProductData;
+            const eventId = generateEventId(); // Generar event_id
 
             pushToDataLayer({
                 event: 'begin_checkout',
                 ecommerce: {
+                    event_id: eventId, // <--- AÑADIDO event_id
                     currency: productData.currency,
                     value: productData.price * productData.quantity,
                     items: [{
@@ -263,21 +273,22 @@
                 }
             });
 
-            messageBox.innerHTML = '<p class="text-amber-300">💳 Por favor, completa tus datos para finalizar la compra.</p>';
-            beginCheckoutBtn.classList.add('hidden'); // Ocultar botón "Proceder al Pago"
-            checkoutSection.classList.remove('hidden'); // Mostrar formulario de checkout
-            checkoutTotalSpan.textContent = productData.price.toFixed(2); // Actualizar total en botón de compra
-            document.getElementById('fullName').focus(); // Focus en el primer campo del formulario
+            messageBox.innerHTML = `<p class="text-amber-300">💳 Por favor, completa tus datos. (Event ID: ${eventId})</p>`;
+            beginCheckoutBtn.classList.add('hidden');
+            checkoutSection.classList.remove('hidden');
+            checkoutTotalSpan.textContent = productData.price.toFixed(2);
+            document.getElementById('fullName').focus();
         }
 
         /**
          * Maneja la sumisión del formulario de checkout (compra).
          */
         checkoutForm.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevenir envío real del formulario
+            event.preventDefault();
 
             const productData = currentProductData;
             const transactionId = 'TID' + Date.now();
+            const eventId = generateEventId(); // Generar event_id
 
             // Recolectar datos del formulario
             const formData = new FormData(checkoutForm);
@@ -289,21 +300,15 @@
                 city: formData.get('city'),
                 postalCode: formData.get('postalCode'),
                 country: formData.get('country'),
-                // --- IMPORTANTE SOBRE PII (Información Personal Identificable) ---
-                // Los detalles de la tarjeta de crédito (número completo, CVV, fecha exacta)
-                // NUNCA deben enviarse directamente al dataLayer para herramientas de analítica como GA4.
-                // Esto es una violación de la privacidad y de los términos de servicio de muchas plataformas.
-                // Para simulación, podríamos tomar los últimos 4 dígitos o un indicador,
-                // pero en un entorno real, esta información se maneja de forma segura en el backend.
-                // cc_last4: formData.get('ccNumber').slice(-4), // Ejemplo SOLO para simulación, NO para producción.
             };
 
             pushToDataLayer({
-                event: 'order_complete',
+                event: 'purchase',
                 ecommerce: {
+                    event_id: eventId, // <--- AÑADIDO event_id
                     transaction_id: transactionId,
                     value: productData.price * productData.quantity,
-                    tax: parseFloat((productData.price * 0.18).toFixed(2)), // Ejemplo 18% IGV
+                    tax: parseFloat((productData.price * 0.18).toFixed(2)),
                     shipping: 5.00,
                     currency: productData.currency,
                     coupon: 'PRACTICEGTM',
@@ -315,12 +320,11 @@
                         quantity: productData.quantity
                     }]
                 },
-                customer_details: customerDetails // Datos del cliente para GTM
+                customer_details: customerDetails
             });
 
-            messageBox.innerHTML = `<p class="text-emerald-300">🎉 ¡Compra completada! Gracias, ${customerDetails.fullName}.<br>ID de Transacción: ${transactionId}</p>`;
-            checkoutSection.classList.add('hidden'); // Ocultar formulario
-            // Opcional: podrías ocultar el botón de reset o cambiar su texto.
+            messageBox.innerHTML = `<p class="text-emerald-300">🎉 ¡Compra completada! Gracias, ${customerDetails.fullName}.<br>TID: ${transactionId} (Event ID: ${eventId})</p>`;
+            checkoutSection.classList.add('hidden');
         });
 
 
@@ -328,9 +332,9 @@
          * Cancela el proceso de checkout y vuelve a la vista del producto.
          */
         function cancelCheckout() {
-            checkoutSection.classList.add('hidden'); // Ocultar formulario
-            productSection.classList.remove('hidden'); // Mostrar producto de nuevo
-            beginCheckoutBtn.classList.remove('hidden'); // Mostrar botón de "Proceder al Pago"
+            checkoutSection.classList.add('hidden');
+            productSection.classList.remove('hidden');
+            beginCheckoutBtn.classList.remove('hidden');
             messageBox.innerHTML = `<p class="text-sky-300">✅ "${currentProductData.name}" sigue en tu carrito.</p>`;
         }
 
@@ -340,34 +344,33 @@
          */
         function resetFlow() {
             productSection.classList.remove('hidden');
-            addToCartBtn.classList.remove('hidden'); // Asegurarse que el botón original de add to cart sea visible
-            
+            addToCartBtn.classList.remove('hidden');
+
             beginCheckoutBtn.classList.add('hidden');
             checkoutSection.classList.add('hidden');
-            checkoutForm.reset(); // Limpiar campos del formulario
+            checkoutForm.reset();
 
             messageBox.innerHTML = '<p>Bienvenido. Selecciona un producto para comenzar.</p>';
-            
-            // Recargar datos del producto iniciales por si se modificaron
+
             currentProductData = getProductData();
             checkoutTotalSpan.textContent = currentProductData.price.toFixed(2);
 
-
-            // Opcional: limpiar el dataLayer o algunas de sus variables si es necesario para la prueba.
-            // window.dataLayer.push({'variable_a_limpiar': undefined});
             console.log('Flujo de simulación reiniciado.');
-            // Disparar view_item de nuevo al reiniciar
             triggerViewItem();
         }
-        
+
         /**
          * Dispara el evento view_item.
+         * Nota: Generalmente, view_item no necesita un event_id para deduplicación
+         * de la misma forma que los eventos de conversión, pero se podría añadir si tu lógica lo requiere.
+         * Por ahora, lo mantenemos sin él para seguir la práctica común.
          */
         function triggerViewItem() {
             const productData = currentProductData;
              pushToDataLayer({
                 event: 'view_item',
                 ecommerce: {
+                    // event_id: generateEventId(), // Opcional añadir aquí si es necesario
                     currency: productData.currency,
                     value: productData.price,
                     items: [{
@@ -383,10 +386,10 @@
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
-            currentProductData = getProductData(); // Cargar datos del producto al inicio
+            currentProductData = getProductData();
             checkoutTotalSpan.textContent = currentProductData.price.toFixed(2);
-            console.log('Página de práctica GTM (Avanzada) cargada y lista.');
-            triggerViewItem(); // Enviar view_item al cargar la página
+            console.log('Página de práctica GTM (Avanzada con Event ID) cargada y lista.');
+            triggerViewItem();
         });
     </script>
 
