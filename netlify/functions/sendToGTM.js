@@ -34,7 +34,7 @@ exports.handler = async (event) => {
         // Aquí debes poner la URL de tu contenedor GTM Server-Side.
         // Esta es la misma URL que usarías para un webhook directo.
         // Por ejemplo: 'https://yourdomain.stape.io/data'
-        const gtmServerSideUrl = 'https://YOUR_GTM_SERVER_SIDE_URL'; // <<-- ¡CAMBIA ESTO!
+        const gtmServerSideUrl = 'https://isphgneb.saw.stape.io'; // <<-- ¡CAMBIA ESTO!
 
         // Envía los datos del formulario (ya parseados a JSON) a tu GTM Server-Side
         const response = await fetch(gtmServerSideUrl, {
