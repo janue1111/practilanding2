@@ -29,6 +29,21 @@
         n=d.getElementsByTagName(e)[0],n.parentNode.insertBefore(l,n);})
         (window,document,'script','https://assets.mailerlite.com/js/universal.js','ml');
         ml('account', '1404722');
+
+        // Função para obter o ID único da cookie (igual ao seu Passo 1)
+        function getUniqueTrackingIdFromCookie() {
+            var cookieName = '_mi_id_seguimiento'; // <<-- ¡Asegúrate que este nombre coincida con tu Paso 1!
+            var cookieValue = '';
+            var cookies = document.cookie.split('; ');
+            for(var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName + '=') === 0) {
+                    cookieValue = cookie.substring(cookieName.length + 1);
+                    break;
+                }
+            }
+            return cookieValue;
+        }
     </script>
     <!-- End MailerLite Universal -->
 
@@ -48,96 +63,58 @@
         <!-- End MailerLite Form -->
     </div>
 
-    <!-- Script para detectar o envio do formulário MailerLite e empurrar dados para o dataLayer -->
     <script>
-      // Função para empurrar os dados do formulário para o dataLayer
-      function pushMailerLiteData(formEvent) {
-        try {
-          var form = formEvent.target;
-          var formData = new FormData(form);
+        // Esperar a que el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            const uniqueId = getUniqueTrackingIdFromCookie();
 
-          // Captura os valores dos campos do formulário.
-          // ATENÇÃO: Verifique os atributos 'name' dos seus campos no HTML do formulário MailerLite.
-          // Por exemplo, se o campo de email tiver name="email_address", você mudaria 'fields[email]' para 'email_address'.
-          var email = formData.get('fields[email]'); // Nome padrão do campo de email do MailerLite
-          var name = formData.get('fields[name]');   // Nome padrão do campo de nome do MailerLite
-          var phone = formData.get('fields[phone]'); // Nome padrão do campo de telefone do MailerLite (se você tiver um)
+            if (uniqueId) {
+                // Función para intentar llenar el campo oculto de MailerLite
+                function fillMailerLiteHiddenField() {
+                    // MailerLite a menudo nombra los campos ocultos de una manera predecible,
+                    // como 'fields[custom_field_ID]' o 'fields[nombre_del_campo_personalizado]'.
+                    // También es posible que el formulario se incruste dentro de un iframe.
 
-          // Tenta obter o user_id do dataLayer.
-          // Presume que a sua Stape Data Tag já colocou o user_id no dataLayer com o evento 'initial_visit_data'.
-          // Isso é crucial para conectar o envio do formulário com a visita inicial.
-          var userId = '';
-          if (window.dataLayer) {
-            for (var i = 0; i < window.dataLayer.length; i++) {
-              var item = window.dataLayer[i];
-              if (item && item.user_id && item.event === 'initial_visit_data') {
-                userId = item.user_id;
-                break; // Encontrou o user_id, pode sair do loop
-              }
-            }
-          }
+                    // Primero, intenta encontrar el input por el nombre exacto de tu campo personalizado 'unique_tracking_id'
+                    // Este es el selector más probable si no está en un iframe o si MailerLite genera el name así.
+                    let hiddenField = document.querySelector('input[name="fields[unique_tracking_id]"]');
 
-          // Empurra o evento personalizado e os dados para o dataLayer
-          window.dataLayer.push({
-            event: 'mailerlite_form_submit', // Nome do evento que você usará como trigger no GTM
-            form_name: 'MailerLite Subscription', // Nome descritivo para este formulário
-            form_email: email,
-            form_name_field: name, // Adapte se precisar de mais campos ou nomes diferentes
-            form_phone_field: phone, // Adapte se precisar de mais campos ou nomes diferentes
-            user_id_on_submit: userId // O user_id associado a este envio do formulário
-          });
+                    if (!hiddenField) {
+                        // Si no lo encuentra directamente, es posible que esté dentro de un iframe.
+                        // MailerLite usa un iframe para su formulario incrustado '.ml-embedded'
+                        const mlIframe = document.querySelector('.ml-embedded iframe');
+                        if (mlIframe && mlIframe.contentDocument) {
+                            hiddenField = mlIframe.contentDocument.querySelector('input[name="fields[unique_tracking_id]"]');
+                        }
+                    }
 
-          console.log('MailerLite form submitted and data pushed to dataLayer:', {
-            form_email: email,
-            form_name_field: name,
-            form_phone_field: phone,
-            user_id_on_submit: userId
-          });
-
-        } catch (e) {
-          console.error('Erro ao empurrar dados do formulário MailerLite para o dataLayer:', e);
-        }
-      }
-
-      // MutationObserver para detectar quando o formulário MailerLite é adicionado ao DOM.
-      // Isso é necessário porque o MailerLite injeta o formulário dinamicamente.
-      var observer = new MutationObserver(function(mutationsList, observer) {
-        for (var i = 0; i < mutationsList.length; i++) {
-          var mutation = mutationsList[i];
-          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-            for (var j = 0; j < mutation.addedNodes.length; j++) {
-              var node = mutation.addedNodes[j];
-              // Verifica se o nó adicionado é um elemento HTML e contém um formulário MailerLite
-              // O seletor 'form[data-ml-form]' é baseado na estrutura comum dos formulários MailerLite.
-              if (node.nodeType === 1 && node.querySelector && node.querySelector('form[data-ml-form]')) {
-                var mailerLiteForm = node.querySelector('form[data-ml-form]');
-                if (mailerLiteForm) {
-                  // Adiciona o event listener para o evento 'submit' do formulário
-                  mailerLiteForm.addEventListener('submit', pushMailerLiteData);
-                  console.log('Formulário MailerLite detectado e listener de submit adicionado.');
-                  observer.disconnect(); // Desconecta o observer uma vez que o formulário é encontrado e o listener é adicionado
-                  return; // Sai da função após desconectar o observer
+                    if (hiddenField) {
+                        hiddenField.value = uniqueId;
+                        console.log('ID Único insertado en campo oculto de MailerLite:', uniqueId);
+                        return true; // Campo encontrado y llenado
+                    } else {
+                        console.warn('Campo oculto de MailerLite para unique_tracking_id no encontrado todavía.');
+                        return false; // Campo no encontrado
+                    }
                 }
-              }
+
+                // Intenta llenar el campo, repitiendo cada cierto tiempo si no lo encuentra.
+                // Esto es porque el formulario de MailerLite se carga dinámicamente.
+                let attempts = 0;
+                const maxAttempts = 20; // Intentar hasta 20 veces
+                const intervalTime = 500; // Cada 0.5 segundos
+
+                const checkInterval = setInterval(() => {
+                    if (fillMailerLiteHiddenField() || attempts >= maxAttempts) {
+                        clearInterval(checkInterval); // Detener el intento si se llena o si se alcanzan los intentos máximos
+                    }
+                    attempts++;
+                }, intervalTime);
+
+            } else {
+                console.warn('Cookie de ID Único no encontrada. Asegúrate de que el script de generación de ID esté funcionando.');
             }
-          }
-        }
-      });
-
-      // Começa a observar o corpo do documento para mudanças nos filhos e subárvores.
-      observer.observe(document.body, { childList: true, subtree: true });
-
-      // Fallback: Caso o formulário já esteja presente no DOM no carregamento inicial da página (menos comum para MailerLite)
-      document.addEventListener('DOMContentLoaded', function() {
-        var existingMailerLiteForm = document.querySelector('form[data-ml-form]');
-        if (existingMailerLiteForm) {
-          existingMailerLiteForm.addEventListener('submit', pushMailerLiteData);
-          console.log('Formulário MailerLite encontrado em DOMContentLoaded e listener adicionado.');
-          observer.disconnect();
-        }
-      });
-
+        });
     </script>
-
 </body>
 </html>
