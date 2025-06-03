@@ -60,6 +60,8 @@
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- MailerLite Universal -->
     <script>
         (function(w,d,e,u,f,l,n){w[f]=w[f]||function(){(w[f].q=w[f].q||[])
         .push(arguments);},l=d.createElement(e),l.async=1,l.src=u,
@@ -67,7 +69,9 @@
         (window,document,'script','https://assets.mailerlite.com/js/universal.js','ml');
         ml('account', '1404722');
     </script>
-    </head>
+    <!-- End MailerLite Universal -->
+
+</head>
 <body class="bg-gradient-to-br from-slate-900 to-slate-700 text-white min-h-screen flex flex-col items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
 
     <div class="container mx-auto p-6 bg-slate-800 shadow-2xl rounded-xl max-w-2xl w-full">
@@ -191,12 +195,18 @@
             </div>
         </section>
 
-        <div class="ml-embedded mt-8" data-form="tAmK3E"></div>
+        <!-- MailerLite Form -->
+        <section id="mailerliteFormSection" class="mt-8 text-center">
+            <h2 class="text-2xl font-semibold text-sky-300 mb-6">Assine nossa Newsletter!</h2>
+            <div class="ml-embedded" data-form="tAmK3E"></div>
+        </section>
+        <!-- End MailerLite Form -->
+
         <div class="mt-8 text-center">
             <button id="resetBtn"
                     onclick="resetFlow()"
                     class="btn bg-rose-500 hover:bg-rose-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-opacity-75">
-                🔄 Reiniciar Simulación Completa
+                🔄 Reiniciar Simulação Completa
             </button>
         </div>
     </div>
