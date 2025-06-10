@@ -60,25 +60,15 @@
         <!-- Fim do Formulário MailerLite -->
     </div>
 
-<!-- INÍCIO DO SCRIPT PARA GOOGLE TAG MANAGER -->
+<!-- INÍCIO DO SCRIPT PARA GOOGLE TAG MANAGER (VERSIÓN CORREGIDA) -->
 <script>
-    // Inicia o dataLayer se ele ainda não existir. É uma boa prática para evitar erros.
+    // Inicia o dataLayer se ele ainda não existir.
     window.dataLayer = window.dataLayer || [];
 
-    /**
-     * Gera um UUID v4 (Universally Unique Identifier) usando a API de Criptografia do navegador.
-     * Essencial para criar um event_id único para cada conversão.
-     * @returns {string} Um UUID v4, por exemplo: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'
-     */
     function generateUUID() {
       return crypto.randomUUID();
     }
 
-    /**
-     * Busca o valor de um cookie específico pelo nome.
-     * @param {string} name - O nome do cookie a ser buscado (ex: '_fbp', '_fbc').
-     * @returns {string|undefined} O valor do cookie ou undefined se não for encontrado.
-     */
     function getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -86,86 +76,81 @@
       return undefined;
     }
 
-    /**
-     * Extrai um parâmetro de consulta (query parameter) da URL da página atual.
-     * @param {string} name - O nome do parâmetro da URL (ex: 'gclid').
-     * @returns {string|null} O valor do parâmetro ou null se não for encontrado.
-     */
     function getURLParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
     }
 
-    /**
-     * Ouve o evento 'ml-embedded:form:load', que é disparado quando o formulário MailerLite é carregado na página.
-     * Usamos este evento para encontrar o campo oculto que você criou (`event_id_hidden`) e preenchê-lo
-     * com um UUID único. Isso garante que o mesmo ID seja enviado no webhook e no dataLayer.
-     */
     document.addEventListener('ml-embedded:form:load', function(event) {
         try {
-            // O MailerLite gera IDs dinâmicos, então selecionamos o campo pelo atributo 'name', que é estável.
+            // Esto está perfecto, ya que tu campo en MailerLite se llama 'event_id_hidden'
             const hiddenField = document.querySelector('input[name="fields[event_id_hidden]"]');
             if (hiddenField) {
                 const newUUID = generateUUID();
                 hiddenField.value = newUUID;
                 console.log('Campo oculto event_id preenchido com o valor:', newUUID);
             } else {
-                console.warn("Aviso: Campo oculto com nome 'fields[event_id_hidden]' não foi encontrado. O event_id não será enviado no webhook. Verifique se o campo foi criado corretamente no MailerLite.");
+                console.warn("Aviso: Campo oculto 'event_id_hidden' não encontrado.");
             }
         } catch(e) {
-            console.error('Erro ao tentar preencher o campo oculto do event_id:', e);
+            console.error('Erro ao preencher o campo oculto do event_id:', e);
         }
     });
 
-    /**
-     * Ouve o evento 'ml-embedded:form:success' da API do MailerLite.
-     * Esta é a maneira mais confiável de acionar nosso script, pois ele é executado somente *após*
-     * o MailerLite confirmar que o lead foi enviado com sucesso.
-     * O callback nos fornece todos os dados que foram enviados no formulário.
-     */
     document.addEventListener('ml-embedded:form:success', function(event) {
         try {
-            // Os dados do formulário estão na propriedade 'detail.data' do objeto de evento.
             const data = event.detail.data;
             console.log('Formulário enviado com sucesso. Dados recebidos do MailerLite:', data);
 
-            // 1. CAPTURA DOS DADOS DO FORMULÁRIO E RASTREAMENTO
-            // Captura o event_id que foi preenchido no campo oculto. Se falhar, gera um novo como fallback.
             const eventId = data.fields.event_id_hidden || generateUUID();
-            
-            // Captura os dados de rastreamento (Cookies e URL)
             const fbp = getCookie('_fbp');
             const fbc = getCookie('_fbc');
             const gclid = getURLParam('gclid');
 
-            // 2. MONTAGEM DO PAYLOAD PARA O DATALAYER
-            // Estrutura do objeto conforme solicitado, separando dados do lead e dados do usuário para CAPI.
+            // --- INICIO DE LA CORRECCIÓN ---
+            // Leemos los campos EXACTOS como aparecen en tu configuración de MailerLite
+            
+            const nombre = data.fields.Nombre || '';       // <-- CAMBIO AQUÍ: Usamos 'Nombre'
+            const apellido = data.fields.Apellido || ''; // <-- CAMBIO AQUÍ: Usamos 'Apellido'
+            const telefono = data.fields.Teléfono || undefined; // <-- CAMBIO AQUÍ: Usamos 'Teléfono'
+
             const dataLayerPayload = {
                 event: 'lead_form_submit',
                 event_id: eventId,
-                // NOVIDADE: O objeto 'lead_data' agora contém DINAMICAMENTE todos os campos do seu formulário.
-                lead_data: { ...data.fields },
+                lead_data: {
+                    ...data.fields // Esto envía todos los campos tal cual vienen de MailerLite
+                },
                 user_data: {
+                    // El campo de email casi siempre es 'email' por defecto en MailerLite. Lo mantenemos.
                     email: data.fields.email || '',
-                    phone_number: data.fields.phone || undefined, // Certifique-se que o nome do campo é 'phone' no MailerLite
+                    
+                    // El campo de nombre completo puede ser la unión de nombre y apellido
+                    full_name: `${nombre} ${apellido}`.trim(),
+                    
+                    // El campo de teléfono, usando el nombre correcto
+                    phone_number: telefono,
+
+                    // Datos de seguimiento
                     fbp: fbp,
                     fbc: fbc,
                     gclid: gclid,
                     client_user_agent: navigator.userAgent,
-                    client_ip_address: 'AUTO_DETECT', // Será preenchido pelo GTM Server-Side.
+                    client_ip_address: 'AUTO_DETECT',
                 }
             };
 
-            // Remove a propriedade 'phone_number' de 'user_data' se ela não tiver valor, para manter os dados limpos.
+            // Limpiamos los campos opcionales si no tienen valor
             if (!dataLayerPayload.user_data.phone_number) {
                 delete dataLayerPayload.user_data.phone_number;
             }
+            if (!dataLayerPayload.user_data.full_name) {
+                delete dataLayerPayload.user_data.full_name;
+            }
 
-            // 3. ENVIO PARA O DATALAYER
-            // A função push adiciona o evento à fila do dataLayer para o GTM processar.
+            // --- FIN DE LA CORRECCIÓN ---
+
             window.dataLayer.push(dataLayerPayload);
-
-            console.log('Evento "lead_form_submit" enviado para o dataLayer:', dataLayerPayload);
+            console.log('Evento "lead_form_submit" ENVIADO para o dataLayer:', dataLayerPayload);
 
         } catch (error) {
             console.error('Erro ao processar o envio do formulário para o dataLayer:', error);
