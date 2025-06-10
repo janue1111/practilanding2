@@ -129,31 +129,25 @@
             const data = event.detail.data;
             console.log('Formulário enviado com sucesso. Dados recebidos do MailerLite:', data);
 
-            // 1. CAPTURA DOS DADOS DO FORMULÁRIO
-            // Os dados vêm diretamente do objeto 'data' fornecido pelo evento.
-            const email = data.fields.email || '';
-            const name = data.fields.name || '';
-            const phone = data.fields.phone || undefined; // Assume que o campo de telefone no MailerLite se chama 'phone'.
-            
+            // 1. CAPTURA DOS DADOS DO FORMULÁRIO E RASTREAMENTO
             // Captura o event_id que foi preenchido no campo oculto. Se falhar, gera um novo como fallback.
             const eventId = data.fields.event_id_hidden || generateUUID();
-
-            // 2. CAPTURA DOS DADOS DE RASTREAMENTO (Cookies e URL)
+            
+            // Captura os dados de rastreamento (Cookies e URL)
             const fbp = getCookie('_fbp');
             const fbc = getCookie('_fbc');
             const gclid = getURLParam('gclid');
 
-            // 3. MONTAGEM DO PAYLOAD PARA O DATALAYER
+            // 2. MONTAGEM DO PAYLOAD PARA O DATALAYER
             // Estrutura do objeto conforme solicitado, separando dados do lead e dados do usuário para CAPI.
             const dataLayerPayload = {
                 event: 'lead_form_submit',
                 event_id: eventId,
-                lead_data: {
-                    email: email,
-                    name: name,
-                },
+                // NOVIDADE: O objeto 'lead_data' agora contém DINAMICAMENTE todos os campos do seu formulário.
+                lead_data: { ...data.fields },
                 user_data: {
-                    email: email,
+                    email: data.fields.email || '',
+                    phone_number: data.fields.phone || undefined, // Certifique-se que o nome do campo é 'phone' no MailerLite
                     fbp: fbp,
                     fbc: fbc,
                     gclid: gclid,
@@ -162,13 +156,12 @@
                 }
             };
 
-            // Adiciona o número de telefone aos objetos 'lead_data' e 'user_data' apenas se ele foi preenchido.
-            if (phone) {
-                dataLayerPayload.lead_data.phone_number = phone;
-                dataLayerPayload.user_data.phone_number = phone;
+            // Remove a propriedade 'phone_number' de 'user_data' se ela não tiver valor, para manter os dados limpos.
+            if (!dataLayerPayload.user_data.phone_number) {
+                delete dataLayerPayload.user_data.phone_number;
             }
 
-            // 4. ENVIO PARA O DATALAYER
+            // 3. ENVIO PARA O DATALAYER
             // A função push adiciona o evento à fila do dataLayer para o GTM processar.
             window.dataLayer.push(dataLayerPayload);
 
