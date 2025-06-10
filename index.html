@@ -64,90 +64,67 @@
 
     </div> <!-- Este es el div que cierra tu container -->
 
-<!-- SCRIPT DE DEPURACIÓN PARA GTM -->
+<!-- SCRIPT DE DEPURACIÓN v3: ESPIONAJE DE MENSAJES (MessageEvent) -->
 <script>
-    console.log("DEBUG: Script de depuración cargado y listo.");
-    window.dataLayer = window.dataLayer || [];
+    console.log("DEBUG v3: Script de espionaje de mensajes cargado.");
 
-    // --- Funciones auxiliares (sin cambios) ---
-    function generateUUID() { return crypto.randomUUID(); }
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-      return undefined;
-    }
-    function getURLParam(name) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(name);
-    }
-
-    // --- Listener para el evento de carga del formulario ---
-    document.addEventListener('ml-embedded:form:load', function(event) {
-        console.log("DEBUG: Evento 'ml-embedded:form:load' detectado.");
-        try {
-            const hiddenField = document.querySelector('input[name="fields[event_id_hidden]"]');
-            if (hiddenField) {
-                hiddenField.value = generateUUID();
-                console.log("DEBUG: Campo oculto 'event_id_hidden' llenado con:", hiddenField.value);
-            } else {
-                console.warn("DEBUG-WARN: Campo oculto 'event_id_hidden' no se encontró en el formulario.");
-            }
-        } catch(e) {
-            console.error("DEBUG-ERROR: Ocurrió un error en el listener 'form:load'.", e);
-        }
-    });
-
-
-    // --- Listener para el evento de éxito del formulario (LA PARTE MÁS IMPORTANTE) ---
-    document.addEventListener('ml-embedded:form:success', function(event) {
-        // 1. Mensaje inicial para confirmar que el listener se activó
-        console.log("-----------------------------------------");
-        console.log("PASO 1: ¡ÉXITO! El listener 'ml-embedded:form:success' se ha disparado.");
-        console.log("-----------------------------------------");
-
-        try {
-            // 2. Mostrar los datos crudos que nos da MailerLite
-            console.log("PASO 2: Mostrando los datos crudos recibidos de MailerLite...");
-            console.dir(event.detail.data); // Usamos console.dir para ver el objeto de forma interactiva
-
-            const data = event.detail.data;
-
-            // 3. Construir el payload
-            console.log("PASO 3: Construyendo el objeto 'dataLayerPayload'...");
-            const dataLayerPayload = {
-                event: 'lead_form_submit',
-                event_id: data.fields.event_id_hidden || generateUUID(),
-                lead_data: { ...data.fields },
-                user_data: {
-                    email: data.fields.email || '',
-                    phone_number: data.fields.Teléfono || undefined, // Usamos el nombre de tu campo
-                    full_name: `${data.fields.Nombre || ''} ${data.fields.Apellido || ''}`.trim(),
-                    fbp: getCookie('_fbp'),
-                    fbc: getCookie('_fbc'),
-                    gclid: getURLParam('gclid'),
-                    client_user_agent: navigator.userAgent,
-                    client_ip_address: 'AUTO_DETECT',
-                }
-            };
+    // Escuchamos CUALQUIER mensaje que llegue a la ventana principal.
+    window.addEventListener('message', function(event) {
+        
+        // Filtramos para ver solo los mensajes que podrían venir de MailerLite.
+        if (event.origin && event.origin.includes('mailerlite')) {
             
-            // 4. Mostrar el payload final antes de enviarlo
-            console.log("PASO 4: El 'dataLayerPayload' final que se va a enviar es:");
-            console.dir(dataLayerPayload);
+            console.log("-----------------------------------------");
+            console.log("¡ÉXITO POTENCIAL! Mensaje recibido de un origen de MailerLite:", event.origin);
+            console.log("-----------------------------------------");
+            
+            // Mostramos TODOS los datos del evento para inspeccionarlos.
+            console.log("Datos completos del mensaje (event.data):");
+            console.dir(event.data);
 
-            // 5. El envío al dataLayer
-            console.log("PASO 5: Ejecutando 'window.dataLayer.push(dataLayerPayload)'... AHORA.");
-            window.dataLayer.push(dataLayerPayload);
-            console.log("PASO 6: ¡Comando 'push' ejecutado! Revisa la ventana de GTM Preview.");
+            // Intentamos procesarlo como si fuera el evento de éxito
+            if (event.data && event.data.type === 'ml-embedded:form:success') {
+                console.log("¡CONFIRMADO! Este es el evento de éxito que buscábamos.");
 
-        } catch (error) {
-            // 6. Si algo falla DENTRO del try, lo veremos aquí
-            console.error("DEBUG-ERROR: ¡HA OCURRIDO UN ERROR DENTRO DEL BLOQUE TRY!", error);
-            console.log("El objeto 'event' que causó el error fue:", event);
+                try {
+                    const data = event.data.data; // Los datos del formulario están un nivel más adentro
+                    console.log("Datos del formulario extraídos:", data);
+
+                    const dataLayerPayload = {
+                        event: 'lead_form_submit_SUCCESS', // Usamos un nombre nuevo para estar seguros
+                        form_data_raw: data, // Enviamos los datos crudos para verlos en GTM
+                        event_id: data.fields.event_id_hidden || 'fallback-uuid-' + Date.now(),
+                        user_data: {
+                            email: data.fields.email,
+                            phone: data.fields.Teléfono,
+                            name: data.fields.Nombre,
+                            last_name: data.fields.Apellido
+                        }
+                    };
+
+                    console.log("Payload final para dataLayer:", dataLayerPayload);
+
+                    window.dataLayer = window.dataLayer || [];
+                    window.dataLayer.push(dataLayerPayload);
+
+                    console.log("¡PUSH A DATALAYER REALIZADO! Revisa GTM.");
+
+                } catch (e) {
+                    console.error("ERROR al procesar los datos del mensaje de éxito.", e);
+                }
+            }
         }
     });
+
+    // Mantenemos el listener original como respaldo, por si acaso.
+    document.addEventListener('ml-embedded:form:success', function(event) {
+        console.log("DEBUG v3: El listener original 'ml-embedded:form:success' también se disparó. Esto es inesperado pero bueno.");
+        // Si este se dispara, el código anterior debería haber funcionado.
+        // Puedes añadir aquí el dataLayer.push si es necesario.
+    });
+
 </script>
-<!-- FIN DEL SCRIPT DE DEPURACIÓN -->
+<!-- FIN DEL SCRIPT DE DEPURACIÓN v3 -->
 
 </body>
 </html>
