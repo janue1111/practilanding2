@@ -60,104 +60,94 @@
         <!-- Fim do Formulário MailerLite -->
     </div>
 
-<!-- INÍCIO DO SCRIPT PARA GOOGLE TAG MANAGER (VERSIÓN CORREGIDA) -->
+... (todo tu HTML y el formulario de MailerLite está aquí arriba) ...
+
+    </div> <!-- Este es el div que cierra tu container -->
+
+<!-- SCRIPT DE DEPURACIÓN PARA GTM -->
 <script>
-    // Inicia o dataLayer se ele ainda não existir.
+    console.log("DEBUG: Script de depuración cargado y listo.");
     window.dataLayer = window.dataLayer || [];
 
-    function generateUUID() {
-      return crypto.randomUUID();
-    }
-
+    // --- Funciones auxiliares (sin cambios) ---
+    function generateUUID() { return crypto.randomUUID(); }
     function getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
       if (parts.length === 2) return parts.pop().split(';').shift();
       return undefined;
     }
-
     function getURLParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
     }
 
+    // --- Listener para el evento de carga del formulario ---
     document.addEventListener('ml-embedded:form:load', function(event) {
+        console.log("DEBUG: Evento 'ml-embedded:form:load' detectado.");
         try {
-            // Esto está perfecto, ya que tu campo en MailerLite se llama 'event_id_hidden'
             const hiddenField = document.querySelector('input[name="fields[event_id_hidden]"]');
             if (hiddenField) {
-                const newUUID = generateUUID();
-                hiddenField.value = newUUID;
-                console.log('Campo oculto event_id preenchido com o valor:', newUUID);
+                hiddenField.value = generateUUID();
+                console.log("DEBUG: Campo oculto 'event_id_hidden' llenado con:", hiddenField.value);
             } else {
-                console.warn("Aviso: Campo oculto 'event_id_hidden' não encontrado.");
+                console.warn("DEBUG-WARN: Campo oculto 'event_id_hidden' no se encontró en el formulario.");
             }
         } catch(e) {
-            console.error('Erro ao preencher o campo oculto do event_id:', e);
+            console.error("DEBUG-ERROR: Ocurrió un error en el listener 'form:load'.", e);
         }
     });
 
+
+    // --- Listener para el evento de éxito del formulario (LA PARTE MÁS IMPORTANTE) ---
     document.addEventListener('ml-embedded:form:success', function(event) {
+        // 1. Mensaje inicial para confirmar que el listener se activó
+        console.log("-----------------------------------------");
+        console.log("PASO 1: ¡ÉXITO! El listener 'ml-embedded:form:success' se ha disparado.");
+        console.log("-----------------------------------------");
+
         try {
+            // 2. Mostrar los datos crudos que nos da MailerLite
+            console.log("PASO 2: Mostrando los datos crudos recibidos de MailerLite...");
+            console.dir(event.detail.data); // Usamos console.dir para ver el objeto de forma interactiva
+
             const data = event.detail.data;
-            console.log('Formulário enviado com sucesso. Dados recebidos do MailerLite:', data);
 
-            const eventId = data.fields.event_id_hidden || generateUUID();
-            const fbp = getCookie('_fbp');
-            const fbc = getCookie('_fbc');
-            const gclid = getURLParam('gclid');
-
-            // --- INICIO DE LA CORRECCIÓN ---
-            // Leemos los campos EXACTOS como aparecen en tu configuración de MailerLite
-            
-            const nombre = data.fields.Nombre || '';       // <-- CAMBIO AQUÍ: Usamos 'Nombre'
-            const apellido = data.fields.Apellido || ''; // <-- CAMBIO AQUÍ: Usamos 'Apellido'
-            const telefono = data.fields.Teléfono || undefined; // <-- CAMBIO AQUÍ: Usamos 'Teléfono'
-
+            // 3. Construir el payload
+            console.log("PASO 3: Construyendo el objeto 'dataLayerPayload'...");
             const dataLayerPayload = {
                 event: 'lead_form_submit',
-                event_id: eventId,
-                lead_data: {
-                    ...data.fields // Esto envía todos los campos tal cual vienen de MailerLite
-                },
+                event_id: data.fields.event_id_hidden || generateUUID(),
+                lead_data: { ...data.fields },
                 user_data: {
-                    // El campo de email casi siempre es 'email' por defecto en MailerLite. Lo mantenemos.
                     email: data.fields.email || '',
-                    
-                    // El campo de nombre completo puede ser la unión de nombre y apellido
-                    full_name: `${nombre} ${apellido}`.trim(),
-                    
-                    // El campo de teléfono, usando el nombre correcto
-                    phone_number: telefono,
-
-                    // Datos de seguimiento
-                    fbp: fbp,
-                    fbc: fbc,
-                    gclid: gclid,
+                    phone_number: data.fields.Teléfono || undefined, // Usamos el nombre de tu campo
+                    full_name: `${data.fields.Nombre || ''} ${data.fields.Apellido || ''}`.trim(),
+                    fbp: getCookie('_fbp'),
+                    fbc: getCookie('_fbc'),
+                    gclid: getURLParam('gclid'),
                     client_user_agent: navigator.userAgent,
                     client_ip_address: 'AUTO_DETECT',
                 }
             };
+            
+            // 4. Mostrar el payload final antes de enviarlo
+            console.log("PASO 4: El 'dataLayerPayload' final que se va a enviar es:");
+            console.dir(dataLayerPayload);
 
-            // Limpiamos los campos opcionales si no tienen valor
-            if (!dataLayerPayload.user_data.phone_number) {
-                delete dataLayerPayload.user_data.phone_number;
-            }
-            if (!dataLayerPayload.user_data.full_name) {
-                delete dataLayerPayload.user_data.full_name;
-            }
-
-            // --- FIN DE LA CORRECCIÓN ---
-
+            // 5. El envío al dataLayer
+            console.log("PASO 5: Ejecutando 'window.dataLayer.push(dataLayerPayload)'... AHORA.");
             window.dataLayer.push(dataLayerPayload);
-            console.log('Evento "lead_form_submit" ENVIADO para o dataLayer:', dataLayerPayload);
+            console.log("PASO 6: ¡Comando 'push' ejecutado! Revisa la ventana de GTM Preview.");
 
         } catch (error) {
-            console.error('Erro ao processar o envio do formulário para o dataLayer:', error);
+            // 6. Si algo falla DENTRO del try, lo veremos aquí
+            console.error("DEBUG-ERROR: ¡HA OCURRIDO UN ERROR DENTRO DEL BLOQUE TRY!", error);
+            console.log("El objeto 'event' que causó el error fue:", event);
         }
     });
 </script>
-<!-- FIM DO SCRIPT PARA GOOGLE TAG MANAGER -->
+<!-- FIN DEL SCRIPT DE DEPURACIÓN -->
 
 </body>
 </html>
