@@ -1050,36 +1050,45 @@
 
     </div> <!-- Este es el div que cierra tu container -->
 
-<!-- SCRIPT FINAL PARA FORMULARIO HTML DE MAILERLITE -->
+<!-- SCRIPT FINAL v2 (ROBUSTO) PARA FORMULARIO HTML -->
 <script>
-    console.log("Script final para formulario HTML cargado.");
+    console.log("Script final v2 (Robusto) para formulario HTML cargado.");
     window.dataLayer = window.dataLayer || [];
 
-    // Buscamos el formulario por el ID que le pusimos.
     const mailerliteForm = document.getElementById('mi-formulario-mailerlite');
 
     if (mailerliteForm) {
-        console.log("Formulario HTML de MailerLite encontrado. Añadiendo listener...");
+        console.log("Formulario HTML encontrado. Añadiendo listener...");
 
-        // Añadimos un listener para el evento 'submit'.
         mailerliteForm.addEventListener('submit', function(event) {
             console.log("¡EVENTO SUBMIT DETECTADO!");
 
             try {
-                // Capturamos los valores DIRECTAMENTE de los campos del formulario.
-                // Los nombres de los campos ('fields[email]', etc.) vienen del código HTML de MailerLite.
-                const email = mailerliteForm.querySelector('input[name="fields[email]"]').value;
-                const nombre = mailerliteForm.querySelector('input[name="fields[Nombre]"]').value;
-                const telefono = mailerliteForm.querySelector('input[name="fields[Teléfono]"]').value;
+                // --- INICIO DE LA CORRECCIÓN ---
+                // Función auxiliar para obtener valores de forma segura
+                function getFieldValue(selector) {
+                    const element = mailerliteForm.querySelector(selector);
+                    return element ? element.value : ''; // Si no encuentra el elemento, devuelve una cadena vacía en lugar de null
+                }
+
+                // Capturamos los valores usando nuestra función segura
+                // ¡VERIFICA QUE ESTOS NOMBRES SEAN LOS CORRECTOS EN TU HTML!
+                const email = getFieldValue('input[name="fields[email]"]');
+                const nombre = getFieldValue('input[name="fields[name]"]');
+                const telefono = getFieldValue('input[name="fields[phone]"]');
+                const apellido = getFieldValue('input[name="fields[last_name]"]');
                 
+                // Si el campo de teléfono no está en tu formulario, la línea de arriba simplemente devolverá '' y no causará un error.
+
+                console.log("Datos capturados:", { email, nombre, telefono, apellido });
+
                 // ¡IMPORTANTE! Llena el campo oculto ANTES de que se envíe.
                 const hiddenField = mailerliteForm.querySelector('input[name="fields[event_id_hidden]"]');
                 const eventId = crypto.randomUUID();
                 if (hiddenField) {
                     hiddenField.value = eventId;
+                    console.log("Campo oculto llenado con event_id:", eventId);
                 }
-
-                console.log("Datos capturados:", { email, nombre, telefono, eventId });
 
                 // Montamos el payload para GTM.
                 const dataLayerPayload = {
@@ -1093,17 +1102,13 @@
                     },
                     user_data: {
                         email: email,
-                        phone_number: telefono,
-                        // Añade aquí más datos si los necesitas (fbp, fbc, etc.)
+                        phone_number: telefono || undefined, // Si telefono es '', se convierte en undefined
                         client_user_agent: navigator.userAgent,
                         client_ip_address: 'AUTO_DETECT',
                     }
                 };
-
-                // Limpiamos datos opcionales si están vacíos.
-                if (!dataLayerPayload.user_data.phone_number) {
-                    delete dataLayerPayload.user_data.phone_number;
-                }
+                
+                // --- FIN DE LA CORRECCIÓN ---
 
                 console.log("Payload final para dataLayer:", dataLayerPayload);
                 
@@ -1115,15 +1120,13 @@
             } catch (error) {
                 console.error("Error al procesar el submit del formulario HTML:", error);
             }
-
-            // NO usamos event.preventDefault(). Dejamos que el formulario se envíe normalmente a MailerLite.
         });
 
     } else {
         console.error("ERROR CRÍTICO: No se encontró el formulario con id='mi-formulario-mailerlite'. Verifica que el ID esté bien puesto en la etiqueta <form>.");
     }
 </script>
-<!-- FIN DEL SCRIPT FINAL -->
+<!-- FIN DEL SCRIPT FINAL v2 -->
 
 </body>
 </html>
