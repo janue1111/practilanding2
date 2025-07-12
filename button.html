@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botón Iframe</title>
+    <!-- Se vuelve a incluir Tailwind aquí porque el iframe es una página independiente -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos para el cuerpo del iframe */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column; /* Para apilar el botón y el mensaje */
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            /* Fondo transparente para que se integre mejor con la página principal */
+            background-color: transparent; 
+        }
+        /* Estilos y transiciones para el H1 */
+        h1 {
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            user-select: none; /* Evita que el texto se seleccione al hacer clic */
+        }
+        h1:active {
+            transform: scale(0.98); /* Efecto visual al hacer clic */
+        }
+        /* Transición para el mensaje de confirmación */
+        #message {
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+      Este es el botón que se mostrará dentro del iframe.
+      Es una etiqueta H1 con clases de Tailwind CSS para que parezca un botón azul, como solicitaste.
+    -->
+    <h1 id="cartButton" class="bg-blue-600 text-white font-bold text-xl py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 w-full text-center">
+        Añadir al Carrito
+    </h1>
+    <!-- Mensaje de confirmación que aparece al hacer clic -->
+    <p id="message" class="text-green-600 mt-2 font-semibold opacity-0">¡Producto añadido!</p>
+
+    <script>
+        const cartButton = document.getElementById('cartButton');
+        const message = document.getElementById('message');
+
+        cartButton.addEventListener('click', () => {
+            // Muestra el mensaje de confirmación cambiando su opacidad
+            message.classList.remove('opacity-0');
+
+            // Oculta el mensaje de nuevo después de 2 segundos
+            setTimeout(() => {
+                message.classList.add('opacity-0');
+            }, 2000);
+
+            // NOTA: En un caso real, aquí se debería enviar un mensaje a la página padre
+            // para notificar que se ha añadido un producto al carrito.
+            // Esto se haría con: window.parent.postMessage('producto-añadido', '*');
+        });
+    </script>
+</body>
+</html>
