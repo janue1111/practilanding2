@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Producto</title>
+    <!-- Incluyendo Tailwind CSS para un diseño rápido y moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Usando la fuente Inter de Google Fonts para una mejor tipografía -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-lg w-full">
+        <!-- Tarjeta de Producto -->
+        <div class="product-card">
+            <img 
+                src="https://placehold.co/600x400/3498db/ffffff?text=Producto+Genial" 
+                alt="Imagen de un producto genial de color azul y blanco" 
+                class="rounded-lg mb-4 w-full h-auto object-cover"
+            >
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Producto Genial</h2>
+            <p class="text-gray-600 mb-4">Una descripción fantástica para un producto que sin duda necesitas en tu vida. Es innovador, elegante y muy útil.</p>
+            <p class="text-4xl font-bold text-blue-600 mb-6">$99.99</p>
+        </div>
+
+        <!-- Contenedor del Iframe -->
+        <!--
+            ADVERTENCIA DE BUENAS PRÁCTICAS:
+            En una aplicación real, usar un iframe para un botón de "Añadir al carrito" no es recomendable.
+            1. Comunicación Compleja: Para actualizar el carrito en la página principal, se necesita usar `postMessage`, lo cual es más complejo que una llamada directa a una función de JavaScript.
+            2. Accesibilidad: Puede confundir a los lectores de pantalla.
+            3. Estilo: Es difícil aplicar estilos al contenido del iframe desde la página principal.
+            4. SEO: El contenido del iframe puede no ser indexado correctamente.
+            
+            Se implementa así únicamente para cumplir con los requisitos de tu solicitud.
+        -->
+        <div class="iframe-container border border-dashed border-red-400 p-4 rounded-lg mt-6">
+             <p class="text-xs text-red-600 mb-2 font-semibold text-center">-- INICIO DEL CONTENEDOR DEL IFRAME (borde rojo solo para visualización) --</p>
+             <iframe src="button.html" class="w-full h-24 border-0" title="Botón para Añadir al Carrito"></iframe>
+             <p class="text-xs text-red-600 mt-2 font-semibold text-center">-- FIN DEL CONTENEDOR DEL IFRAME --</p>
+        </div>
+    </div>
+
+</body>
+</html>
