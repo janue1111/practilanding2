@@ -1,176 +1,139 @@
+<!-- 
+  INSTRUCCIONES:
+  Para que esto funcione, debes crear DOS archivos HTML separados.
+  1. Copia el código de "PARTE 1: index.html" y guárdalo en un archivo llamado "index.html".
+  2. Copia el código de "PARTE 2: button.html" y guárdalo en un archivo llamado "button.html".
+  3. Asegúrate de que ambos archivos estén en la misma carpeta.
+  4. Abre "index.html" en tu navegador.
+-->
+
+<!-- ============================================================================== -->
+<!-- PARTE 1: index.html (La página principal con el producto y el iframe) -->
+<!-- ============================================================================== -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario MailerLite con DataLayer</title>
-    <!-- He eliminado Tailwind y otros estilos para simplificar, puedes añadirlos de nuevo si quieres -->
+    <title>Página de Producto</title>
+    <!-- Incluyendo Tailwind CSS para un diseño rápido y moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Usando la fuente Inter de Google Fonts para una mejor tipografía -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <!-- MailerLite Universal (esto está bien) -->
-    <script>
-        (function(w,d,e,u,f,l,n){w[f]=w[f]||function(){(w[f].q=w[f].q||[])
-        .push(arguments);},l=d.createElement(e),l.async=1,l.src=u,
-        n=d.getElementsByTagName(e)[0],n.parentNode.insertBefore(l,n);})
-        (window,document,'script','https://assets.mailerlite.com/js/universal.js','ml');
-        ml('account', '1404722');
-    </script>
-    <!-- End MailerLite Universal -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-lg w-full">
+        <!-- Tarjeta de Producto -->
+        <div class="product-card">
+            <img 
+                src="https://placehold.co/600x400/3498db/ffffff?text=Producto+Genial" 
+                alt="Imagen de un producto genial de color azul y blanco" 
+                class="rounded-lg mb-4 w-full h-auto object-cover"
+            >
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Producto Genial</h2>
+            <p class="text-gray-600 mb-4">Una descripción fantástica para un producto que sin duda necesitas en tu vida. Es innovador, elegante y muy útil.</p>
+            <p class="text-4xl font-bold text-blue-600 mb-6">$99.99</p>
+        </div>
+
+        <!-- Contenedor del Iframe -->
+        <!--
+            ADVERTENCIA DE BUENAS PRÁCTICAS:
+            En una aplicación real, usar un iframe para un botón de "Añadir al carrito" no es recomendable.
+            1. Comunicación Compleja: Para actualizar el carrito en la página principal, se necesita usar `postMessage`, lo cual es más complejo que una llamada directa a una función de JavaScript.
+            2. Accesibilidad: Puede confundir a los lectores de pantalla.
+            3. Estilo: Es difícil aplicar estilos al contenido del iframe desde la página principal.
+            4. SEO: El contenido del iframe puede no ser indexado correctamente.
+            
+            Se implementa así únicamente para cumplir con los requisitos de tu solicitud.
+        -->
+        <div class="iframe-container border border-dashed border-red-400 p-4 rounded-lg mt-6">
+             <p class="text-xs text-red-600 mb-2 font-semibold text-center">-- INICIO DEL CONTENEDOR DEL IFRAME (borde rojo solo para visualización) --</p>
+             <iframe src="button.html" class="w-full h-24 border-0" title="Botón para Añadir al Carrito"></iframe>
+             <p class="text-xs text-red-600 mt-2 font-semibold text-center">-- FIN DEL CONTENEDOR DEL IFRAME --</p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+<!-- ============================================================================== -->
+<!-- PARTE 2: button.html (El contenido del iframe con el botón H1) -->
+<!-- ============================================================================== -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botón Iframe</title>
+    <!-- Se vuelve a incluir Tailwind aquí porque el iframe es una página independiente -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos para el cuerpo del iframe */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column; /* Para apilar el botón y el mensaje */
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            /* Fondo transparente para que se integre mejor con la página principal */
+            background-color: transparent; 
+        }
+        /* Estilos y transiciones para el H1 */
+        h1 {
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            user-select: none; /* Evita que el texto se seleccione al hacer clic */
+        }
+        h1:active {
+            transform: scale(0.98); /* Efecto visual al hacer clic */
+        }
+        /* Transición para el mensaje de confirmación */
+        #message {
+            transition: opacity 0.5s ease;
+        }
+    </style>
 </head>
 <body>
-
-    <h1>Formulario de Suscripción</h1>
-
-    <!--
-        INSTRUCCIÓN CLAVE:
-        1. Ve a MailerLite y asegúrate de tener un campo personalizado.
-        2. El NOMBRE (no la etiqueta) de ese campo debe ser EXACTAMENTE: event_id_hidden
-        3. Asegúrate de que este campo esté añadido a tu formulario dentro del editor de MailerLite.
-           No lo añadas manualmente al código HTML, deja que MailerLite lo genere.
+    <!-- 
+      Este es el botón que se mostrará dentro del iframe.
+      Es una etiqueta H1 con clases de Tailwind CSS para que parezca un botón azul, como solicitaste.
     -->
+    <h1 id="cartButton" class="bg-blue-600 text-white font-bold text-xl py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 w-full text-center">
+        Añadir al Carrito
+    </h1>
+    <!-- Mensaje de confirmación que aparece al hacer clic -->
+    <p id="message" class="text-green-600 mt-2 font-semibold opacity-0">¡Producto añadido!</p>
 
-    <!-- FORMULARIO ORIGINAL DE MAILERLITE (SIN MODIFICAR, SOLO PEGADO) -->
-    <div id="mlb2-26776364" class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-26776364">
-      <div class="ml-form-align-center ">
-        <div class="ml-form-embedWrapper embedForm">
-          <div class="ml-form-embedBody ml-form-embedBodyDefault row-form">
-            <div class="ml-form-embedContent">
-              <h4>Newsletter</h4>
-              <p>Signup for news and special offers!</p>
-            </div>
-            <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/1404722/forms/156192246499116355/subscribe" data-code="" method="post" target="_blank">
-              
-              <!-- CAMPO OCULTO QUE DEBE SER GENERADO POR MAILERLITE -->
-              <!-- Si MailerLite no genera este campo, el script de abajo lo creará por si acaso -->
-              
-              <div class="ml-form-formContent">
-                <div class="ml-form-fieldRow">
-                  <div class="ml-field-group ml-field-email ml-validate-email ml-validate-required">
-                    <input aria-label="email" aria-required="true" type="email" class="form-control" name="fields[email]" placeholder="Email" autocomplete="email">
-                  </div>
-                </div>
-                <div class="ml-form-fieldRow">
-                  <div class="ml-field-group ml-field-name">
-                    <input aria-label="name" type="text" class="form-control" name="fields[name]" placeholder="Nombre" autocomplete="given-name">
-                  </div>
-                </div>
-                <div class="ml-form-fieldRow">
-                  <div class="ml-field-group ml-field-phone ml-validate-required">
-                    <input aria-label="phone" aria-required="true" type="text" class="form-control" name="fields[phone]" placeholder="Teléfono" autocomplete="">
-                  </div>
-                </div>
-                <div class="ml-form-fieldRow ml-last-item">
-                  <div class="ml-field-group ml-field-last_name">
-                    <input aria-label="last_name" type="text" class="form-control" name="fields[last_name]" placeholder="Apellido" autocomplete="family-name">
-                  </div>
-                </div>
-              </div>
-              <input type="hidden" name="ml-submit" value="1">
-              <div class="ml-form-embedSubmit">
-                <button type="submit" class="primary">Subscribe</button>
-                <button disabled="disabled" style="display: none;" type="button" class="loading">
-                  <div class="ml-form-embedSubmitLoad"></div>
-                  <span class="sr-only">Loading...</span>
-                </button>
-              </div>
-              <input type="hidden" name="anticsrf" value="true">
-            </form>
-          </div>
-          <div class="ml-form-successBody row-success" style="display: none">
-            <div class="ml-form-successContent">
-              <h4>Thank you!</h4>
-              <p>You have successfully joined our subscriber list.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     <script>
-      function ml_webform_success_26776364() {
-        var $ = ml_jQuery || jQuery;
-        $('.ml-subscribe-form-26776364 .row-success').show();
-        $('.ml-subscribe-form-26776364 .row-form').hide();
-      }
-    </script>
-    <script src="https://groot.mailerlite.com/js/w/webforms.min.js?v176e10baa5e7ed80d35ae235be3d5024" type="text/javascript"></script>
-    <!-- FIN DEL CÓDIGO DE MAILERLITE -->
+        const cartButton = document.getElementById('cartButton');
+        const message = document.getElementById('message');
 
+        cartButton.addEventListener('click', () => {
+            // Muestra el mensaje de confirmación cambiando su opacidad
+            message.classList.remove('opacity-0');
 
-    <!-- =========== INICIO DEL NUEVO SCRIPT DE INTEGRACIÓN GTM =========== -->
-    <script>
-        console.log("Script de integración GTM cargado.");
-        window.dataLayer = window.dataLayer || [];
+            // Oculta el mensaje de nuevo después de 2 segundos
+            setTimeout(() => {
+                message.classList.add('opacity-0');
+            }, 2000);
 
-        // 1. Esperamos a que todo el contenido de la página, incluyendo los scripts de MailerLite, se haya cargado.
-        document.addEventListener('DOMContentLoaded', function() {
-            
-            const mailerliteForm = document.querySelector('.ml-block-form');
-            const submitButton = mailerliteForm.querySelector('button[type="submit"]');
-
-            if (!mailerliteForm || !submitButton) {
-                console.error("No se pudo encontrar el formulario o el botón de MailerLite.");
-                return;
-            }
-
-            console.log("Formulario y botón de MailerLite encontrados.");
-
-            // 2. Generamos un event_id único UNA SOLA VEZ.
-            const uniqueEventId = crypto.randomUUID();
-            console.log("Event ID generado:", uniqueEventId);
-
-            // 3. Buscamos el campo oculto. Si no existe, lo creamos dinámicamente.
-            let hiddenField = mailerliteForm.querySelector('input[name="fields[event_id_hidden]"]');
-            
-            if (!hiddenField) {
-                console.warn("El campo oculto 'event_id_hidden' no fue generado por MailerLite. Creándolo dinámicamente.");
-                hiddenField = document.createElement('input');
-                hiddenField.type = 'hidden';
-                hiddenField.name = 'fields[event_id_hidden]';
-                mailerliteForm.appendChild(hiddenField); // Lo añadimos al formulario
-            }
-
-            // 4. Asignamos el valor del event_id al campo oculto.
-            hiddenField.value = uniqueEventId;
-            console.log("Campo oculto preparado con el event_id.");
-
-            // 5. Añadimos un listener al evento CLICK del botón, que es más fiable.
-            submitButton.addEventListener('click', function() {
-                console.log("Botón de envío presionado. Preparando dataLayer push.");
-
-                // Función auxiliar para obtener los valores del formulario en el momento del click
-                const getFieldValue = (name) => {
-                    const field = mailerliteForm.querySelector(`input[name="${name}"]`);
-                    return field ? field.value : null;
-                };
-                
-                // Capturamos los datos
-                const email = getFieldValue('fields[email]');
-                const nombre = getFieldValue('fields[name]');
-                const telefono = getFieldValue('fields[phone]');
-
-                // Validamos que al menos el email exista para no enviar datos vacíos
-                if (!email) {
-                    console.warn("Intento de envío sin email. No se enviará evento a GTM.");
-                    return;
-                }
-
-                // Preparamos el payload para GTM
-                const dataLayerPayload = {
-                    event: 'lead_form_submit',
-                    event_id: uniqueEventId, // Usamos el ID generado al cargar la página
-                    user_data: {
-                        email: email,
-                        fn: nombre, // fn = first name
-                        ph: telefono // ph = phone
-                    }
-                };
-
-                // Enviamos a dataLayer
-                window.dataLayer.push(dataLayerPayload);
-                console.log("Push a dataLayer realizado con éxito:", dataLayerPayload);
-            });
+            // NOTA: En un caso real, aquí se debería enviar un mensaje a la página padre
+            // para notificar que se ha añadido un producto al carrito.
+            // Esto se haría con: window.parent.postMessage('producto-añadido', '*');
         });
     </script>
-    <!-- =========== FIN DEL NUEVO SCRIPT DE INTEGRACIÓN GTM =========== -->
-
 </body>
 </html>
